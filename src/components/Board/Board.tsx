@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { css } from 'emotion';
-import { splitEvery } from 'ramda';
 import Tile, { ITile } from '../Tile/Tile';
 
 const toPositiveInteger = (num: number) => {
@@ -8,8 +7,6 @@ const toPositiveInteger = (num: number) => {
 
   return !Number.isInteger(num) ? Math.floor(num) : num;
 };
-
-type Row = ITile[];
 
 interface Props {
   size: number;
@@ -24,23 +21,23 @@ class Board extends React.Component {
 
     const root = toPositiveInteger(Math.sqrt(tiles.length));
 
-    const rows: Row[] = splitEvery(root, tiles);
+    const tileSize = (window.innerWidth - 50) / root;
 
     return (
-      <div>
-        {rows.map((row, rowIndex) => (
-          <div
-            key={rowIndex}
-            className={css`
-              display: flex;
-            `}
-          >
-            {row.map((tile, tileIndex) => (
-              <Tile {...tile} key={tileIndex} />
-            ))}
-          </div>
-        ))}
-      </div>
+      <React.Fragment>
+        <p>{tileSize}</p>
+        <div
+          className={css`
+            position: relative;
+            height: ${tileSize * root}px;
+            width: ${tileSize * root}px;
+          `}
+        >
+          {tiles.map((tile) => (
+            <Tile {...tile} size={tileSize} key={tile.id} />
+          ))}
+        </div>
+      </React.Fragment>
     );
   }
 }

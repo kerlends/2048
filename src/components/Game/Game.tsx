@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { assoc } from 'ramda';
+import Button from '@material-ui/core/Button';
 import Board from '../Board';
 import { ITile } from '../Tile/Tile';
 import { Direction } from '../../enums';
@@ -11,6 +11,7 @@ interface Props {
 }
 
 interface State {
+  dataView: boolean;
   ready: boolean;
   tiles: ITile[];
 }
@@ -19,6 +20,7 @@ class Game extends React.Component {
   props: Props;
 
   state: State = {
+    dataView: false,
     ready: false,
     tiles: [],
   };
@@ -88,12 +90,13 @@ class Game extends React.Component {
 
       let id = 0;
 
-      for (let x = 0; x < root; x++) {
-        for (let y = 0; y < root; y++) {
+      for (let y = 0; y < root; y++) {
+        for (let x = 0; x < root; x++) {
           const tile: ITile = {
             position: { x, y },
-            value: 0,
+            value: null,
             id: id++,
+            size: 0,
           };
 
           tiles.push(tile);
@@ -137,66 +140,85 @@ class Game extends React.Component {
   };
 
   private moveTilesUp = () =>
-    this.setState((prevState: State) => {
-      let tiles = [...prevState.tiles];
+    new Promise((r) =>
+      this.setState((prevState: State) => {
+        let tiles = JSON.parse(JSON.stringify(prevState.tiles));
 
-      for (let i = 0; i < tiles.length; i++) {
-        const tile: ITile = tiles[i];
-        let foundTile: ITile | null = null;
+        for (let i = 0; i < tiles.length; i++) {
+          const tile: ITile = tiles[i];
 
-        while (tile.position.y > 0 || !foundTile) {
-          tile.position.y -= 1;
+          if (!!tile.value) {
+            const pos = { ...tile.position };
 
-          const t = getTileAtPosition(tiles, tile.position);
+            while (pos.y > 0) {
+              pos.y -= 1;
 
-          if (t.value > 0) {
-            const index = this.getIndexForTile(t);
-            tiles = assoc(
-              index.toString(),
-              {
-                ...t,
-                value: t.value + tile.value,
-              },
-              tiles,
-            );
-            break;
+              const t = getTileAtPosition(tiles, pos);
+
+              if (!!t.value) {
+                tiles[this.getIndexForTile(t)].value =
+                  t.value + tile.value;
+
+                tiles[i].value = null;
+                //break;
+              } else {
+                tiles[this.getIndexForTile(t)].value = tile.value;
+                tiles[i].value = null;
+              }
+            }
           }
         }
-      }
 
-      return {
-        tiles,
-      };
-    });
+        return {
+          tiles,
+        };
+      }, r),
+    );
 
   public reset = () => {
     this.initialize();
   };
 
-  public move = (direction: Direction) => {
+  public toggleDataView = () =>
+    this.setState((prevState: State) => ({
+      dataView: !prevState.dataView,
+    }));
+
+  public move = async (direction: Direction) => {
     switch (direction) {
       case Direction.Up: {
-        this.moveTilesUp();
+        await this.moveTilesUp();
         break;
       }
       default:
         break;
     }
+
+    this.createTile();
   };
 
   render() {
     const { size } = this.props;
-    const { ready, tiles } = this.state;
+    const { dataView, ready, tiles } = this.state;
 
     return ready ? (
       <div>
         <div style={{ margin: 16 }}>
-          <button onClick={this.reset}>Reset</button>
-          <button onClick={() => this.move(Direction.Up)}>
+          <Button onClick={this.reset}>Reset</Button>
+          <Button onClick={() => this.move(Direction.Up)}>
             Move up
-          </button>
+          </Button>
+          <Button onClick={this.toggleDataView}>
+            Toggle data view
+          </Button>
         </div>
-        <Board tiles={tiles} size={size} />
+        {!dataView ? (
+          <Board tiles={tiles} size={size} />
+        ) : (
+          <div style={{ height: 450, overflow: 'auto' }}>
+            <pre>{JSON.stringify(tiles, null, 2)}</pre>
+          </div>
+        )}
       </div>
     ) : null;
   }
