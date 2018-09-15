@@ -3,15 +3,26 @@ import { css } from 'emotion';
 import { Position } from '../../models';
 import { baseTileStyle, tileStyles } from './Tile.utils';
 
+interface DefaultProps {
+  mergedFrom: [ITile, ITile] | null;
+}
+
 export interface ITile {
   position: Position;
   value: number | null;
   size: number;
   id: number;
+  mergedFrom?: [ITile, ITile] | null;
 }
 
+type Props = ITile & DefaultProps;
+
 class Tile extends React.Component {
-  props: ITile;
+  public static defaultProps: DefaultProps = {
+    mergedFrom: null,
+  };
+
+  props: Props;
 
   render() {
     const { size, value, position } = this.props;
