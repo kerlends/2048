@@ -21,7 +21,7 @@ class Board extends React.Component {
 
     const root = toPositiveInteger(Math.sqrt(tiles.length));
 
-    const tileSize = (window.innerWidth - 50) / root;
+    const tileSize = Math.min(80, (window.innerWidth - 50) / root);
 
     return (
       <React.Fragment>

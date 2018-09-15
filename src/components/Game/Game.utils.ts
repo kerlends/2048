@@ -5,10 +5,13 @@ import {
   sortBy,
   pathOr,
   values,
+  reverse as rev,
 } from 'ramda';
 import { ITile } from '../Tile';
 import { Position } from '../../models';
 import { Direction } from '../../enums';
+
+const reverse = (tiles: ITile[]): ITile[] => rev(tiles);
 
 export const copy = <T>(obj: T): T => {
   const str = JSON.stringify(obj);
@@ -22,8 +25,26 @@ export const sortVertically: (tiles: ITile[]) => ITile[] = pipe(
   flatten,
 );
 
+export const sortVerticallyReverse: (
+  tiles: ITile[],
+) => ITile[] = pipe(
+  sortBy(pathOr(0, ['position', 'y'])),
+  reverse,
+  groupBy(pathOr(0, ['position', 'x'])),
+  values,
+  flatten,
+);
+
 export const sortHorizontally = pipe(
   sortBy(pathOr(0, ['position', 'x'])),
+  groupBy(pathOr(0, ['position', 'y'])),
+  values,
+  flatten,
+);
+
+export const sortHorizontallyReverse = pipe(
+  sortBy(pathOr(0, ['position', 'x'])),
+  reverse,
   groupBy(pathOr(0, ['position', 'y'])),
   values,
   flatten,

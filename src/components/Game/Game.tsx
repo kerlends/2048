@@ -1,6 +1,5 @@
 import * as React from 'react';
 import Button from '@material-ui/core/Button';
-//import { reverse } from 'ramda';
 import Board from '../Board';
 import { ITile } from '../Tile/Tile';
 import { Direction } from '../../enums';
@@ -9,7 +8,9 @@ import {
   copy,
   getTileAtPosition,
   sortVertically,
+  sortVerticallyReverse,
   sortHorizontally,
+  sortHorizontallyReverse,
   updateTiles,
 } from './Game.utils';
 
@@ -57,8 +58,11 @@ class Game extends React.Component {
     }
   }
 
-  private positionIsEmpty = (position: Position): boolean => {
-    const tile = getTileAtPosition(this.state.tiles, position);
+  private positionIsEmpty = (
+    tiles: ITile[],
+    position: Position,
+  ): boolean => {
+    const tile = getTileAtPosition(tiles, position);
 
     if (!tile) return true;
 
@@ -75,32 +79,38 @@ class Game extends React.Component {
     return blankTiles;
   };
 
-  private getRandomBlankTileIndex = () => {
+  private getRandomBlankTile = () => {
     const blankTiles = this.getBlankTiles();
 
-    if (!blankTiles.length) return null;
+    if (!blankTiles.length) {
+      throw new Error('No blank tiles found');
+    }
 
-    return Math.floor(Math.random() * blankTiles.length);
+    const index = Math.floor(Math.random() * blankTiles.length);
+
+    return blankTiles[index];
   };
 
   private createTile = () => {
     const value = Math.random() < 0.9 ? 2 : 4;
-    const blankTileIndex = this.getRandomBlankTileIndex();
+    const blankTile = this.getRandomBlankTile();
 
     return new Promise((resolve) =>
-      this.setState(
-        (prevState: State) => ({
-          tiles: prevState.tiles.map((tile, index) => {
-            if (index === blankTileIndex)
-              return {
-                ...tile,
+      this.setState((prevState: State) => {
+        return {
+          tiles: prevState.tiles.map((tile) => {
+            if (tile.id === blankTile.id) {
+              const newTile = {
+                ...blankTile,
                 value,
               };
+
+              return newTile;
+            }
             return tile;
           }),
-        }),
-        resolve,
-      ),
+        };
+      }, resolve),
     );
   };
 
@@ -176,6 +186,7 @@ class Game extends React.Component {
   };
 
   private findFurthestPositions = (
+    tiles: ITile[],
     tile: ITile,
     dir: Direction,
   ): {
@@ -197,7 +208,7 @@ class Game extends React.Component {
       cell.x < 4 &&
       cell.y >= 0 &&
       cell.y < 4 &&
-      this.positionIsEmpty(cell)
+      this.positionIsEmpty(tiles, cell)
     );
 
     return {
@@ -210,13 +221,13 @@ class Game extends React.Component {
     const { tiles } = this.state;
     switch (dir) {
       case Direction.Up:
-      case Direction.Down:
         return sortVertically(tiles);
-      //return reverse(sortVertically(tiles));
+      case Direction.Down:
+        return sortVerticallyReverse(tiles);
       case Direction.Left:
-      case Direction.Right:
         return sortHorizontally(tiles);
-      //return reverse(sortHorizontally(tiles));
+      case Direction.Right:
+        return sortHorizontallyReverse(tiles);
       default:
         return tiles;
     }
@@ -244,6 +255,7 @@ class Game extends React.Component {
 
         if (!!tile.value) {
           const positions = this.findFurthestPositions(
+            movedTiles,
             tile,
             direction,
           );
@@ -260,7 +272,7 @@ class Game extends React.Component {
             !nextTile.mergedFrom
           ) {
             nextTile.value = tile.value * 2;
-            nextTile.mergedFrom = [tile, nextTile];
+            nextTile.mergedFrom = [tile.id, nextTile.id];
             tile.value = null;
             updateTiles(movedTiles, nextTile);
             updateTiles(movedTiles, tile);
@@ -282,8 +294,13 @@ class Game extends React.Component {
         }
       }
 
+      const finalTiles = movedTiles.map((tile) => ({
+        ...tile,
+        mergedFrom: null,
+      }));
+
       return {
-        tiles: movedTiles,
+        tiles: finalTiles,
         previousTiles: tiles,
         shouldAddTile: moved,
       };
