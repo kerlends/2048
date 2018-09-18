@@ -1,5 +1,6 @@
 import * as React from 'react';
-import Game from '../Game';
+//import Game from '../Game';
+import Game from '../NewGame';
 
 interface State {
   size: number;
@@ -19,7 +20,7 @@ class App extends React.Component {
   };
 
   public render() {
-    return <Game size={16} numStartTiles={2} />;
+    return <Game />;
   }
 }
 

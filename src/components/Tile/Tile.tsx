@@ -3,7 +3,9 @@ import { css } from 'emotion';
 import { Position } from '../../models';
 import { baseTileStyle, tileStyles } from './Tile.utils';
 
-type MergedFrom = [number, number] | null;
+type ID = number | string;
+
+type MergedFrom = [ID, ID] | null;
 
 interface DefaultProps {
   mergedFrom: MergedFrom;
@@ -13,7 +15,7 @@ export interface ITile {
   position: Position;
   value: number | null;
   size: number;
-  id: number;
+  id: ID;
   mergedFrom?: MergedFrom;
 }
 
