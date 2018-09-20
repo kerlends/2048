@@ -17,3 +17,7 @@ export const move = (direction: Direction) => ({
     direction,
   },
 });
+
+export const restart = () => ({
+  type: ActionTypes.Restart,
+});

@@ -2,16 +2,18 @@ import { AnyAction } from 'redux';
 import { ActionTypes } from './enums';
 import { State } from './models';
 import {
+  hasAvailableMoves,
   initializeWithStartingTiles,
   insertNewTileInUnusedCell,
   moveTiles,
-} from './utils'
+} from './utils';
 
 const initialState = {
   gameOver: false,
   grid: [],
   score: 0,
   size: 0,
+  startingTiles: 0,
 };
 
 const reducer = (state: State = initialState, action: AnyAction) => {
@@ -23,6 +25,7 @@ const reducer = (state: State = initialState, action: AnyAction) => {
         gameOver: false,
         grid: initializeWithStartingTiles(size, startingTiles),
         size,
+        startingTiles,
         score: 0,
       };
     }
@@ -37,8 +40,19 @@ const reducer = (state: State = initialState, action: AnyAction) => {
 
       return {
         ...state,
+        gameOver: !hasAvailableMoves(moved),
         grid: didMove ? insertNewTileInUnusedCell(moved) : moved,
         score: state.score + score,
+      };
+    }
+
+    case ActionTypes.Restart: {
+      const { size, startingTiles } = state;
+      return {
+        ...state,
+        gameOver: false,
+        grid: initializeWithStartingTiles(size, startingTiles),
+        score: 0,
       };
     }
 

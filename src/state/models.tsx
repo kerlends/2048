@@ -20,4 +20,5 @@ export interface State {
   readonly grid: Grid;
   readonly score: number;
   readonly size: number;
+  readonly startingTiles: number;
 }

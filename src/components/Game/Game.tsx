@@ -5,6 +5,7 @@ import * as actions from '../../state/actions';
 import { Direction } from '../../state/enums';
 import { State } from '../../state/models';
 import Tile, { ITile } from '../Tile';
+import GameOverOverlay from '../GameOverOverlay';
 
 const enhance = connect(
   ({ gameOver, grid, score, size }: State) => ({
@@ -22,10 +23,26 @@ interface Props {
   move: typeof actions.move;
   score: number;
   size: number;
+  restart: typeof actions.restart;
 }
 
 class Game extends React.Component<Props> {
   componentDidMount() {
+    this.setEventListeners();
+  }
+
+  componentDidUpdate(lastProps: Props) {
+    if (this.props.gameOver && !lastProps.gameOver)
+      this.removeEventListeners();
+    else if (!this.props.gameOver && lastProps.gameOver)
+      this.setEventListeners();
+  }
+
+  componentWillUnmount() {
+    this.removeEventListeners();
+  }
+
+  setEventListeners = () => {
     window.addEventListener('keydown', this.handleKeyDown);
     window.addEventListener('touchstart', this.handleTouchStart, {
       passive: false,
@@ -36,14 +53,26 @@ class Game extends React.Component<Props> {
     window.addEventListener('touchend', this.handleTouchEnd, {
       passive: false,
     });
-  }
+  };
 
-  componentWillUnmount() {
+  removeEventListeners = () => {
     window.removeEventListener('keydown', this.handleKeyDown);
-    window.removeEventListener('touchstart', this.handleTouchStart);
-    window.removeEventListener('touchmove', this.handleTouchStart);
-    window.removeEventListener('touchend', this.handleTouchStart);
-  }
+    window.removeEventListener(
+      'touchstart',
+      this.handleTouchStart,
+      false,
+    );
+    window.removeEventListener(
+      'touchmove',
+      this.handleTouchMove,
+      false,
+    );
+    window.removeEventListener(
+      'touchend',
+      this.handleTouchEnd,
+      false,
+    );
+  };
 
   moveUp = () => this.props.move(Direction.Up);
 
@@ -52,6 +81,8 @@ class Game extends React.Component<Props> {
   moveLeft = () => this.props.move(Direction.Left);
 
   moveRight = () => this.props.move(Direction.Right);
+
+  restart = () => this.props.restart();
 
   touches: {
     x: number;
@@ -76,7 +107,7 @@ class Game extends React.Component<Props> {
         return this.moveRight();
       }
       default: {
-        return console.log(evt.keyCode);
+        return;
       }
     }
   };
@@ -101,14 +132,11 @@ class Game extends React.Component<Props> {
   };
 
   handleTouchEnd = (evt: TouchEvent): void => {
-    console.log(evt.targetTouches);
     if (evt.targetTouches.length > 0) return;
 
     evt.preventDefault();
 
     const touches = evt.changedTouches[0];
-
-    console.log({ touches });
 
     if (!touches) return;
 
@@ -153,7 +181,7 @@ class Game extends React.Component<Props> {
   };
 
   render() {
-    const { score, grid } = this.props;
+    const { gameOver, score, grid } = this.props;
 
     const boardSize = grid.length * this.getTileSize() + 4;
 
@@ -184,6 +212,9 @@ class Game extends React.Component<Props> {
             margin: 0 auto;
           `}
         >
+          {gameOver && (
+            <GameOverOverlay onRestartClick={this.restart} />
+          )}
           {tiles.map((tile) => (
             <Tile {...tile} key={tile.id} />
           ))}

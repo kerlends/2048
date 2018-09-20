@@ -269,3 +269,38 @@ export const moveTiles = (grid: Grid, direction: Direction) => {
     score,
   };
 };
+
+const directions = [
+  Direction.Up,
+  Direction.Down,
+  Direction.Left,
+  Direction.Right,
+];
+
+export const getNumberOfAvailableMoves = (grid: Grid) => {
+  let availableMoves = 0;
+  for (let y = 0; y < grid.length; y++) {
+    for (let x = 0; x < grid.length; x++) {
+      const tile = getCellAtPosition(grid, { x, y });
+
+      if (!tile) availableMoves += 1;
+      else {
+        for (let dir = 0; dir < directions.length; dir++) {
+          const vector = getVector(directions[dir]);
+          const nextPosition = { x: x + vector.x, y: y + vector.y };
+          const nextCell = getCellAtPosition(grid, nextPosition);
+
+          if (nextCell && nextCell.value === tile.value)
+            availableMoves += 1;
+        }
+      }
+    }
+  }
+
+  return availableMoves;
+};
+
+export const hasAvailableMoves = (grid: Grid) => {
+  const availableMoves = getNumberOfAvailableMoves(grid);
+  return availableMoves > 0;
+};
