@@ -1,7 +1,7 @@
 import * as React from 'react';
 import Transition from 'react-transition-group/Transition';
 import { css } from 'emotion';
-import { Position } from '../../models';
+import { Position } from '../../state/models';
 import { baseTileStyle, tileStyles } from './Tile.utils';
 
 const duration = 150;
@@ -67,6 +67,7 @@ class Tile extends React.Component {
           const styles = transitionStyles[state];
           return (
             <div
+              data-transition-state={state || 'NA'}
               className={css`
                 transition: transform ${transitionDuration}ms
                   ease-in-out;

@@ -1,10 +1,9 @@
-import { lighten, mix } from 'polished';
+import { mix } from 'polished';
 import { css } from 'emotion';
 
 const textBrightColor = '#f9f6f2';
 const tileColor = '#eee4da';
 const tileGoldColor = '#edc22e';
-const tileGoldGlowColor = lighten(0.15, tileGoldColor);
 
 const colorMap = {
   2: [false, false],
@@ -57,21 +56,15 @@ const buildColors = () => {
         specialBackground,
         styles.background,
       );
-    } else {
-      const glowOpacity = Math.max(exponent - 4, 0) / (limit - 4);
-
-      styles.boxShadow = `0 0 30px 10px rgba(${tileGoldGlowColor}, ${glowOpacity /
-        1.8}), inset 0 0 0 1px rgba(white, ${glowOpacity / 3})`;
     }
 
-    if (power >= 100 && power < 1000) styles.fontSize = '45px';
-    else if (power >= 1000) styles.fontSize = '35px';
+    if (power >= 100 && power < 1000) styles.fontSize = '35px';
+    else if (power >= 1000) styles.fontSize = '25px';
 
     tileStylesMap[power] = css`
       color: ${styles.color};
       background: ${styles.background};
       font-size: ${styles.fontSize};
-      box-shadow: ${styles.boxShadow};
     `;
 
     exponent += 1;
@@ -88,5 +81,5 @@ export const baseTileStyle = css`
   text-align: center;
   font-weight: bold;
   z-index: 10;
-  font-size: 55px;
+  font-size: 45px;
 `;
