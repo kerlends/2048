@@ -25,7 +25,6 @@ class Board extends React.Component {
 
     return (
       <React.Fragment>
-        <p>{tileSize}</p>
         <div
           className={css`
             position: relative;

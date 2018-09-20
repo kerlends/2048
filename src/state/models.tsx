@@ -3,21 +3,21 @@ export interface Position {
   y: number;
 }
 
-export interface TransformPositions {
-  farthest: Position;
-  next: Position;
-}
-
 export interface Tile {
   id: string;
-  position: Position;
   value: number;
-  mergedFrom: [string, string] | null;
+  parents: [string, string] | null;
 }
+
+export type Cell = Tile | null;
+
+export type Row = Cell[];
+
+export type Grid = Row[];
 
 export interface State {
   readonly gameOver: boolean;
-  readonly grid: Tile[];
+  readonly grid: Grid;
   readonly score: number;
   readonly size: number;
 }

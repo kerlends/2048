@@ -1,81 +1,56 @@
-import {
-  both,
-  find,
-  flatten,
-  groupBy,
-  pathEq,
-  pathOr,
-  pipe,
-  reverse as rev,
-  sortBy,
-  values,
-} from 'ramda';
-import * as uuid from 'uuid/v4';
-import { Position, Tile, TransformPositions } from './models';
+import * as uuidV4 from 'uuid/v4';
+import { always, lensPath, over, pathOr, reverse } from 'ramda';
 import { Direction } from './enums';
+import { Cell, Grid, Position, Tile } from './models';
 
-const reverse = (tiles: Tile[]): Tile[] => rev(tiles);
+export const initialize = (size: number): Grid => {
+  const grid: Grid = [];
 
-export const sortVertically: (tiles: Tile[]) => Tile[] = pipe(
-  sortBy(pathOr(0, ['position', 'y'])),
-  groupBy(pathOr(0, ['position', 'x'])),
-  values,
-  flatten,
-);
+  for (let x = 0; x < size; x++)
+    for (let y = 0; y < size; y++) {
+      if (!grid[y]) grid[y] = [];
+      grid[y][x] = null;
+    }
 
-export const sortVerticallyReverse: (tiles: Tile[]) => Tile[] = pipe(
-  sortBy(pathOr(0, ['position', 'y'])),
-  reverse,
-  groupBy(pathOr(0, ['position', 'x'])),
-  values,
-  flatten,
-);
-
-export const sortHorizontally = pipe(
-  sortBy(pathOr(0, ['position', 'x'])),
-  groupBy(pathOr(0, ['position', 'y'])),
-  values,
-  flatten,
-);
-
-export const sortHorizontallyReverse = pipe(
-  sortBy(pathOr(0, ['position', 'x'])),
-  reverse,
-  groupBy(pathOr(0, ['position', 'y'])),
-  values,
-  flatten,
-);
-
-export const getSortedTiles = (
-  tiles: Tile[],
-  direction: Direction,
-): Tile[] => {
-  switch (direction) {
-    case Direction.Up:
-      return sortVertically(tiles);
-    case Direction.Down:
-      return sortVerticallyReverse(tiles);
-    case Direction.Left:
-      return sortHorizontally(tiles);
-    case Direction.Right:
-      return sortHorizontallyReverse(tiles);
-    default:
-      return tiles;
-  }
+  return grid;
 };
 
-export const arePositionsEqual = (
-  positionA: Position,
-  positionB: Position,
-) => {
-  const equal =
-    positionA.x === positionB.x && positionA.y === positionB.y;
+export const createTile = (parent1?: Tile, parent2?: Tile): Tile => {
+  if (parent1 && parent2) {
+    return {
+      id: uuidV4(),
+      value: parent1.value * 2,
+      parents: [parent1.id, parent2.id],
+    };
+  }
 
-  console.clear();
-  console.log(
-    JSON.stringify({ positionA, positionB, equal }, null, 2),
-  );
-  return equal;
+  const value = Math.random() < 0.9 ? 2 : 4;
+
+  return {
+    id: uuidV4(),
+    value,
+    parents: null,
+  };
+};
+
+export const getCellAtPosition = (
+  grid: Grid,
+  { x, y }: Position,
+): Cell => pathOr(null, [y, x], grid);
+
+export const getTileAtPosition = (
+  grid: Grid,
+  position: Position,
+): Tile => {
+  const tile = getCellAtPosition(grid, position);
+
+  if (!tile) {
+    throw new Error(
+      `Tile not found at position (${position.x}, ${position.y})`,
+    );
+  }
+
+  return tile;
 };
 
 export const randomIntBetween = (min: number, max: number): number =>
@@ -86,102 +61,62 @@ export const randomPosition = (size: number): Position => ({
   y: randomIntBetween(0, size - 1),
 });
 
-export const tileAtPosition = (
-  tiles: Tile[],
-  position: Position,
-): Tile | null => {
-  if (!tiles.length) return null;
-
-  return (
-    find(
-      both(
-        pathEq(['position', 'x'], position.x),
-        pathEq(['position', 'y'], position.y),
-      ),
-      tiles,
-    ) || null
-  );
-};
-
-export const createTile = (position: Position): Tile => {
-  const value = Math.random() < 0.9 ? 2 : 4;
-  return {
-    id: uuid(),
-    position,
-    value,
-    mergedFrom: null,
-  };
-};
-
-export const getEmptyPositions = (
-  tiles: Tile[],
-  size: number,
-): Position[] => {
+export const getEmptyPositions = (grid: Grid): Position[] => {
   const emptyPositions: Position[] = [];
 
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
+  for (let y = 0; y < grid.length; y++) {
+    for (let x = 0; x < grid.length; x++) {
       const pos = { x, y };
-      if (!tileAtPosition(tiles, pos)) emptyPositions.push(pos);
+      if (!getCellAtPosition(grid, pos)) emptyPositions.push(pos);
     }
   }
 
   return emptyPositions;
 };
 
-export const getRandomEmptyPosition = (
-  tiles: Tile[],
-  size: number,
-): Position => {
-  const emptyPositions = getEmptyPositions(tiles, size);
+export const getRandomEmptyPosition = (grid: Grid): Position => {
+  const emptyPositions = getEmptyPositions(grid);
   const index = Math.floor(Math.random() * emptyPositions.length);
   return emptyPositions[index];
 };
 
-interface IsPositionEmptyOptions {
-  position: Position;
-  size: number;
-  tiles: Tile[];
-}
+export const positionsAreEqual = (a: Position, b: Position) =>
+  a.x === b.x && a.y === b.y;
 
-export const isPositionEmpty = ({
-  position,
-  size,
-  tiles,
-}: IsPositionEmptyOptions) => {
-  const emptyPositions = getEmptyPositions(tiles, size);
-  return emptyPositions.some((pos) =>
-    arePositionsEqual(pos, position),
-  );
-};
-
-export const createTileInEmptyPosition = (
-  tiles: Tile[],
-  size: number,
-) => {
-  const position = getRandomEmptyPosition(tiles, size);
-  return createTile(position);
-};
-
-export const setupGrid = (
-  size: number,
-  startingTiles: number,
-): Tile[] => {
-  let tiles: Tile[] = [];
-
-  while (tiles.length < startingTiles) {
-    const position = randomPosition(size);
-    if (
-      !tiles.some((tile) =>
-        arePositionsEqual(tile.position, position),
-      )
-    ) {
-      const tile = createTile(position);
-      tiles.push(tile);
+export const getPositionForTile = (
+  grid: Grid,
+  tile: Tile,
+): Position => {
+  for (let x = 0; x < grid.length; x++) {
+    for (let y = 0; y < grid.length; y++) {
+      const cell = getCellAtPosition(grid, { x, y });
+      if (cell && cell.id === tile.id) return { x, y };
     }
   }
 
-  return tiles;
+  throw new Error('Tile not found');
+};
+
+export const insertTileAtPosition = (
+  grid: Grid,
+  tile: Tile,
+  pos: Position,
+): Grid => over(lensPath([pos.y, pos.x]), always(tile), grid);
+
+export const insertNewTileInUnusedCell = (grid: Grid): Grid => {
+  const pos = getRandomEmptyPosition(grid);
+  return insertTileAtPosition(grid, createTile(), pos);
+};
+
+export const initializeWithStartingTiles = (
+  size: number,
+  starting: number,
+): Grid => {
+  let grid = initialize(size);
+  for (let i = 0; i < starting - 1; i++) {
+    grid = insertNewTileInUnusedCell(grid);
+  }
+  return grid;
 };
 
 export const getVector = (direction: Direction): Position => {
@@ -204,23 +139,21 @@ export const getVector = (direction: Direction): Position => {
   }
 };
 
-interface TransformPositionsOptions {
-  direction: Direction;
-  position: Position;
-  size: number;
-  tiles: Tile[];
-}
+export const isAvailableCell = (grid: Grid, pos: Position) =>
+  !getCellAtPosition(grid, pos);
 
-export const getTransformPositions = ({
-  direction,
-  position: startPosition,
-  size,
-  tiles,
-}: TransformPositionsOptions): TransformPositions => {
-  const vector = getVector(direction);
-
-  let position: Position = Object.assign({}, startPosition);
-  let previous: Position;
+export const getNextTilePositions = (
+  grid: Grid,
+  tile: Tile,
+  dir: Direction,
+): {
+  furthest: Position;
+  next: Position;
+} => {
+  const vector = getVector(dir);
+  const pos = getPositionForTile(grid, tile);
+  let position: Position = Object.assign({}, pos);
+  let previous: Position = pos;
 
   do {
     previous = position;
@@ -230,83 +163,109 @@ export const getTransformPositions = ({
     };
   } while (
     position.x >= 0 &&
-    position.x <= size &&
     position.y >= 0 &&
-    position.y <= size &&
-    isPositionEmpty({
-      position,
-      tiles,
-      size,
-    })
+    position.x < grid.length &&
+    position.y < grid.length &&
+    isAvailableCell(grid, position)
   );
 
   return {
-    farthest: previous,
+    furthest: previous,
     next: position,
   };
 };
 
-interface MoveOptions {
-  direction: Direction;
-  size: number;
-  tiles: Tile[];
-}
-
-export const move = ({
-  direction,
-  size,
-  tiles: rawTiles,
-}: MoveOptions): {
-  tiles: Tile[];
-  moved: boolean;
-} => {
-  const tiles = getSortedTiles(rawTiles, direction);
-  const movedTiles: Tile[] = [];
-  let moved = false;
-
-  const fromPosition = (position: Position) =>
-    //tileAtPosition(movedTiles, position) ||
-    tileAtPosition(tiles, position);
-
-  for (let i = 0; i < tiles.length; i++) {
-    const tile = tiles[i];
-    if (tile) {
-      const positions = getTransformPositions({
-        direction,
-        position: tile.position,
-        size,
-        tiles,
-      });
-
-      const nextTile = fromPosition(positions.next);
-
-      let newTile: Tile;
-
-      if (
-        nextTile &&
-        nextTile.value === tile.value &&
-        !nextTile.mergedFrom
-      ) {
-        newTile = Object.assign({}, createTile(nextTile.position), {
-          value: nextTile.value * 2,
-          mergedFrom: [nextTile.id, tile.id],
-        });
-      } else {
-        newTile = Object.assign({}, createTile(positions.farthest), {
-          id: tile.id,
-          value: tile.value,
-        });
-      }
-
-      movedTiles.push(newTile);
-
-      if (!arePositionsEqual(newTile.position, tile.position))
-        moved = true;
+export const flattenGrid = (grid: Grid): Cell[] => {
+  const flattened = [];
+  for (let x = 0; x < grid.length; x++) {
+    for (let y = 0; y < grid.length; y++) {
+      flattened.push(getCellAtPosition(grid, { x, y }));
     }
   }
 
+  return flattened;
+};
+
+export const getDirectionTraversals = (
+  grid: Grid,
+  direction: Direction,
+): {
+  x: number[];
+  y: number[];
+} => {
+  let x = [];
+  let y = [];
+
+  for (let t = 0; t < grid.length; t++) {
+    x.push(t);
+    y.push(t);
+  }
+
+  const vector = getVector(direction);
+
+  if (vector.x === 1) x = reverse(x);
+  if (vector.y === 1) y = reverse(y);
+
+  return { x, y };
+};
+
+export const moveTiles = (grid: Grid, direction: Direction) => {
+  const moved: Grid = grid.map((row) =>
+    row.map((cell) => {
+      if (!cell) return null;
+      return {
+        ...cell,
+        parents: null,
+      };
+    }),
+  );
+
+  let didMove = false;
+  let score = 0;
+
+  const insert = (tile: Tile, { x, y }: Position) => {
+    moved[y][x] = tile;
+  };
+
+  const remove = ({ x, y }: Position) => {
+    moved[y][x] = null;
+  };
+
+  const traversals = getDirectionTraversals(moved, direction);
+
+  traversals.x.forEach((x) => {
+    traversals.y.forEach((y) => {
+      const pos = { x, y };
+
+      const cell = getCellAtPosition(moved, pos);
+
+      if (cell) {
+        const positions = getNextTilePositions(
+          moved,
+          cell,
+          direction,
+        );
+
+        const next = getCellAtPosition(moved, positions.next);
+
+        if (next && next.value === cell.value && !next.parents) {
+          const newTile = createTile(next, cell);
+          insert(newTile, positions.next);
+          remove(pos);
+          didMove = true;
+          score += newTile.value;
+        } else if (!positionsAreEqual(pos, positions.furthest)) {
+          insert(cell, positions.furthest);
+          remove(pos);
+          didMove = true;
+        }
+      }
+    });
+  });
+
   return {
-    tiles: movedTiles,
     moved,
+    didMove,
+    score,
   };
 };

@@ -1,22 +1,42 @@
 import * as React from 'react';
+import Transition from 'react-transition-group/Transition';
 import { css } from 'emotion';
 import { Position } from '../../models';
 import { baseTileStyle, tileStyles } from './Tile.utils';
 
-type ID = number | string;
+const duration = 150;
+
+const transitionStyles = {
+  appearing: {
+    scale: 0,
+  },
+  entering: {
+    scale: 0,
+  },
+  entered: {
+    scale: 1,
+  },
+  exited: {
+    scale: 0,
+  },
+};
+
+type ID = string;
 
 type MergedFrom = [ID, ID] | null;
 
 interface DefaultProps {
   mergedFrom: MergedFrom;
+  transitionDuration: number;
 }
 
 export interface ITile {
   position: Position;
-  value: number | null;
+  value: number;
   size: number;
   id: ID;
   mergedFrom?: MergedFrom;
+  transitionDuration?: number;
 }
 
 type Props = ITile & DefaultProps;
@@ -24,32 +44,53 @@ type Props = ITile & DefaultProps;
 class Tile extends React.Component {
   public static defaultProps: DefaultProps = {
     mergedFrom: null,
+    transitionDuration: 150,
   };
 
   props: Props;
 
   render() {
-    const { size, value, position } = this.props;
+    const {
+      mergedFrom,
+      size,
+      value,
+      position,
+      transitionDuration,
+    } = this.props;
     const className = value ? tileStyles[value] : false;
+    const x = position.x * size;
+    const y = position.y * size;
 
     return (
-      <div
-        className={css`
-          position: absolute;
-          top: ${position.y * size}px;
-          left: ${position.x * size}px;
-          margin: 2px;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          height: ${size}px;
-          width: ${size}px;
+      <Transition appear={!mergedFrom} in timeout={duration}>
+        {(state) => {
+          const styles = transitionStyles[state];
+          return (
+            <div
+              className={css`
+                transition: transform ${transitionDuration}ms
+                  ease-in-out;
+                transform: scale(${styles.scale})
+                  translate(${x}px, ${y}px);
+                transform-origin: ${x + size / 2}px ${y + size / 2}px;
+                position: absolute;
+                top: 0;
+                left: 0;
+                margin: 2px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: ${size - 2}px;
+                width: ${size - 2}px;
 
-          ${baseTileStyle} ${className};
-        `}
-      >
-        <span>{value}</span>
-      </div>
+                ${baseTileStyle} ${className};
+              `}
+            >
+              <span>{value}</span>
+            </div>
+          );
+        }}
+      </Transition>
     );
   }
 }

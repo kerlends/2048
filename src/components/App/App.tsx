@@ -1,6 +1,5 @@
 import * as React from 'react';
-//import Game from '../Game';
-import Game from '../NewGame';
+import Game from '../Game';
 
 interface State {
   size: number;

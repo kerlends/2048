@@ -1,347 +1,105 @@
 import * as React from 'react';
-import Button from '@material-ui/core/Button';
-import Board from '../Board';
-import { ITile } from '../Tile/Tile';
-import { Direction } from '../../enums';
-import { Position } from '../../models';
-import {
-  copy,
-  getTileAtPosition,
-  sortVertically,
-  sortVerticallyReverse,
-  sortHorizontally,
-  sortHorizontallyReverse,
-  updateTiles,
-} from './Game.utils';
+import { connect } from 'react-redux';
+import { css } from 'emotion';
+import * as actions from '../../state/actions';
+import { Direction } from '../../state/enums';
+import { State } from '../../state/models';
+import Tile, { ITile } from '../Tile';
+
+const enhance = connect(
+  ({ gameOver, grid, score, size }: State) => ({
+    gameOver,
+    grid,
+    score,
+    size,
+  }),
+  actions,
+);
 
 interface Props {
+  gameOver: boolean;
+  grid: State['grid'];
+  move: typeof actions.move;
+  score: number;
   size: number;
-  numStartTiles: number;
 }
 
-interface State {
-  dataView: boolean;
-  ready: boolean;
-  tiles: ITile[];
-  previousTiles: ITile[];
-  shouldAddTile: boolean;
-}
-
-class Game extends React.Component {
-  props: Props;
-
-  state: State = {
-    dataView: false,
-    ready: false,
-    tiles: [],
-    previousTiles: [],
-    shouldAddTile: false,
-  };
-
+class Game extends React.Component<Props> {
   componentDidMount() {
-    const root = Math.sqrt(this.props.size);
-
-    if (!Number.isInteger(root))
-      throw new Error(
-        'Board size has to have an even number of rows and columns.',
-      );
-
-    this.initialize();
+    window.addEventListener('keydown', this.handleKeyPress);
   }
 
-  componentDidUpdate(_: Props, lastState: State) {
-    if (this.state.shouldAddTile && !lastState.shouldAddTile) {
-      this.createTile();
-      this.setState({
-        shouldAddTile: false,
-      });
-    }
+  componentWillUnmount() {
+    window.removeEventListener('keydown', this.handleKeyPress);
   }
 
-  private positionIsEmpty = (
-    tiles: ITile[],
-    position: Position,
-  ): boolean => {
-    const tile = getTileAtPosition(tiles, position);
-
-    if (!tile) return true;
-
-    return !tile.value;
-  };
-
-  private getBlankTiles = () => {
-    const blankTiles: ITile[] = [];
-
-    for (const tile of this.state.tiles) {
-      if (!tile.value) blankTiles.push(tile);
-    }
-
-    return blankTiles;
-  };
-
-  private getRandomBlankTile = () => {
-    const blankTiles = this.getBlankTiles();
-
-    if (!blankTiles.length) {
-      throw new Error('No blank tiles found');
-    }
-
-    const index = Math.floor(Math.random() * blankTiles.length);
-
-    return blankTiles[index];
-  };
-
-  private createTile = () => {
-    const value = Math.random() < 0.9 ? 2 : 4;
-    const blankTile = this.getRandomBlankTile();
-
-    return new Promise((resolve) =>
-      this.setState((prevState: State) => {
-        return {
-          tiles: prevState.tiles.map((tile) => {
-            if (tile.id === blankTile.id) {
-              const newTile = {
-                ...blankTile,
-                value,
-              };
-
-              return newTile;
-            }
-            return tile;
-          }),
-        };
-      }, resolve),
-    );
-  };
-
-  private setupEmptyBoard = () =>
-    new Promise((resolve) => {
-      const { size } = this.props;
-
-      const root = Math.sqrt(size);
-
-      if (!Number.isInteger(root))
-        throw new Error(
-          'Board size has to have an even number of rows and columns.',
-        );
-
-      const tiles: ITile[] = [];
-
-      let id = 0;
-
-      for (let y = 0; y < root; y++) {
-        for (let x = 0; x < root; x++) {
-          const tile: ITile = {
-            position: { x, y },
-            value: null,
-            id: id++,
-            size: 0,
-          };
-
-          tiles.push(tile);
-        }
+  handleKeyPress = (evt: KeyboardEvent) => {
+    switch (evt.keyCode) {
+      case 38: {
+        return this.moveUp();
       }
-
-      this.setState({ tiles }, resolve);
-    });
-
-  private setupInitialTiles = () =>
-    Promise.all(
-      Array.from(new Array(this.props.numStartTiles)).map(() =>
-        this.createTile(),
-      ),
-    );
-
-  private setReady = (ready: boolean) =>
-    new Promise((resolve) =>
-      this.setState((prevState: State) => {
-        if (prevState.ready === ready) return null;
-
-        return { ready };
-      }, resolve),
-    );
-
-  private initialize = async () => {
-    await this.setReady(false);
-    await this.setupEmptyBoard();
-    await this.setupInitialTiles();
-    await this.setReady(true);
-  };
-
-  private getVectorForDirection = (
-    direction: Direction,
-  ): Position => {
-    switch (direction) {
-      case Direction.Up:
-        return { x: 0, y: -1 };
-      case Direction.Down:
-        return { x: 0, y: 1 };
-      case Direction.Left:
-        return { x: -1, y: 0 };
-      case Direction.Right:
-        return { x: 1, y: 0 };
-      default:
-        return { x: 0, y: 0 };
-    }
-  };
-
-  private findFurthestPositions = (
-    tiles: ITile[],
-    tile: ITile,
-    dir: Direction,
-  ): {
-    farthest: Position;
-    next: Position;
-  } => {
-    const vector = this.getVectorForDirection(dir);
-    let cell: Position = Object.assign({}, tile.position);
-    let previous: Position;
-
-    do {
-      previous = cell;
-      cell = {
-        x: previous.x + vector.x,
-        y: previous.y + vector.y,
-      };
-    } while (
-      cell.x >= 0 &&
-      cell.x < 4 &&
-      cell.y >= 0 &&
-      cell.y < 4 &&
-      this.positionIsEmpty(tiles, cell)
-    );
-
-    return {
-      farthest: previous,
-      next: cell,
-    };
-  };
-
-  private getSortedTiles = (dir: Direction): ITile[] => {
-    const { tiles } = this.state;
-    switch (dir) {
-      case Direction.Up:
-        return sortVertically(tiles);
-      case Direction.Down:
-        return sortVerticallyReverse(tiles);
-      case Direction.Left:
-        return sortHorizontally(tiles);
-      case Direction.Right:
-        return sortHorizontallyReverse(tiles);
-      default:
-        return tiles;
-    }
-  };
-
-  public reset = () => {
-    this.initialize();
-  };
-
-  public toggleDataView = () =>
-    this.setState((prevState: State) => ({
-      dataView: !prevState.dataView,
-    }));
-
-  private move = (direction: Direction) => {
-    this.setState(() => {
-      let moved = true;
-
-      const tiles = this.getSortedTiles(direction);
-
-      const movedTiles: ITile[] = copy(tiles);
-
-      for (let i = 0; i < movedTiles.length; i++) {
-        const tile = movedTiles[i];
-
-        if (!!tile.value) {
-          const positions = this.findFurthestPositions(
-            movedTiles,
-            tile,
-            direction,
-          );
-
-          const nextTile = getTileAtPosition(
-            movedTiles,
-            positions.next,
-          );
-
-          if (
-            nextTile &&
-            nextTile.value &&
-            nextTile.value === tile.value &&
-            !nextTile.mergedFrom
-          ) {
-            nextTile.value = tile.value * 2;
-            nextTile.mergedFrom = [tile.id, nextTile.id];
-            tile.value = null;
-            updateTiles(movedTiles, nextTile);
-            updateTiles(movedTiles, tile);
-          } else {
-            const farthestTile = getTileAtPosition(
-              movedTiles,
-              positions.farthest,
-            );
-            const value = tile.value;
-
-            tile.value = null;
-            updateTiles(movedTiles, tile);
-
-            if (farthestTile) {
-              farthestTile.value = value;
-              updateTiles(movedTiles, farthestTile);
-            }
-          }
-        }
+      case 40: {
+        return this.moveDown();
       }
-
-      const finalTiles = movedTiles.map((tile) => ({
-        ...tile,
-        mergedFrom: null,
-      }));
-
-      return {
-        tiles: finalTiles,
-        previousTiles: tiles,
-        shouldAddTile: moved,
-      };
-    });
+      case 37: {
+        return this.moveLeft();
+      }
+      case 39: {
+        return this.moveRight();
+      }
+      default: {
+        return console.log(evt.keyCode);
+      }
+    }
   };
 
-  public moveUp = () => this.move(Direction.Up);
-  public moveDown = () => this.move(Direction.Down);
-  public moveLeft = () => this.move(Direction.Left);
-  public moveRight = () => this.move(Direction.Right);
+  moveUp = () => this.props.move(Direction.Up);
+  moveDown = () => this.props.move(Direction.Down);
+  moveLeft = () => this.props.move(Direction.Left);
+  moveRight = () => this.props.move(Direction.Right);
 
   render() {
-    const { size } = this.props;
-    const { dataView, ready, tiles, previousTiles } = this.state;
+    const { score, grid } = this.props;
 
-    return ready ? (
-      <div>
-        <div style={{ margin: 16 }}>
-          <Button onClick={this.reset}>Reset</Button>
-          <div>
-            <Button onClick={this.moveUp}>↑</Button>
-            <Button onClick={this.moveDown}>↓</Button>
-            <Button onClick={this.moveLeft}>←</Button>
-            <Button onClick={this.moveRight}>→</Button>
-          </div>
-          <Button onClick={this.toggleDataView}>
-            Toggle data view
-          </Button>
+    const tiles: ITile[] = [];
+
+    grid.forEach((row, y) =>
+      row.forEach((cell, x) => {
+        if (cell)
+          tiles.push({
+            id: cell.id,
+            value: cell.value,
+            mergedFrom: cell.parents,
+            position: { x, y },
+            size: 0,
+          });
+      }),
+    );
+
+    const size = grid.length;
+    const tileSize = Math.min(80, (window.innerWidth - 50) / size);
+    const boardSize = size * tileSize + 4;
+
+    return (
+      <React.Fragment>
+        <h4>Score: {score}</h4>
+        <div
+          className={css`
+            position: relative;
+            height: ${boardSize}px;
+            width: ${boardSize}px;
+            border: 1px solid #d3d3d3;
+            border-radius: 3px;
+            box-sizing: border-box;
+          `}
+        >
+          {tiles.map((tile) => (
+            <Tile {...tile} size={tileSize} key={tile.id} />
+          ))}
         </div>
-        {!dataView ? (
-          <Board tiles={tiles} size={size} />
-        ) : (
-          <div style={{ height: 450, overflow: 'auto' }}>
-            <pre>
-              {JSON.stringify({ tiles, previousTiles }, null, 2)}
-            </pre>
-          </div>
-        )}
-      </div>
-    ) : null;
+      </React.Fragment>
+    );
   }
 }
 
-export default Game;
+export default enhance(Game);

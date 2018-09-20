@@ -1,7 +1,11 @@
 import { AnyAction } from 'redux';
 import { ActionTypes } from './enums';
 import { State } from './models';
-import { createTileInEmptyPosition, move, setupGrid } from './utils';
+import {
+  initializeWithStartingTiles,
+  insertNewTileInUnusedCell,
+  moveTiles,
+} from './utils'
 
 const initialState = {
   gameOver: false,
@@ -17,7 +21,7 @@ const reducer = (state: State = initialState, action: AnyAction) => {
       return {
         ...state,
         gameOver: false,
-        grid: setupGrid(size, startingTiles),
+        grid: initializeWithStartingTiles(size, startingTiles),
         size,
         score: 0,
       };
@@ -26,18 +30,15 @@ const reducer = (state: State = initialState, action: AnyAction) => {
     case ActionTypes.Move: {
       const { direction } = action.payload;
 
-      const { tiles, moved } = move({
+      const { moved, didMove, score } = moveTiles(
+        state.grid,
         direction,
-        tiles: state.grid,
-        size: state.size,
-      });
-
-      if (moved && tiles.length < Math.pow(state.size, 2))
-        tiles.push(createTileInEmptyPosition(tiles, state.size));
+      );
 
       return {
         ...state,
-        grid: tiles,
+        grid: didMove ? insertNewTileInUnusedCell(moved) : moved,
+        score: state.score + score,
       };
     }
 
