@@ -8,9 +8,10 @@ import Tile, { ITile } from '../Tile';
 import GameOverOverlay from '../GameOverOverlay';
 
 const enhance = connect(
-  ({ gameOver, grid, score, size }: State) => ({
+  ({ gameOver, grid, hiScore, score, size }: State) => ({
     gameOver,
     grid,
+    hiScore,
     score,
     size,
   }),
@@ -20,6 +21,7 @@ const enhance = connect(
 interface Props {
   gameOver: boolean;
   grid: State['grid'];
+  hiScore: number;
   move: typeof actions.move;
   score: number;
   size: number;
@@ -49,7 +51,7 @@ class Game extends React.Component<Props> {
 
     if (!node) return;
 
-    node.addEventListener('keydown', this.handleKeyDown);
+    window.addEventListener('keydown', this.handleKeyDown);
     node.addEventListener('touchstart', this.handleTouchStart, {
       passive: false,
     });
@@ -66,7 +68,7 @@ class Game extends React.Component<Props> {
 
     if (!node) return;
 
-    node.removeEventListener('keydown', this.handleKeyDown);
+    window.removeEventListener('keydown', this.handleKeyDown);
     node.removeEventListener(
       'touchstart',
       this.handleTouchStart,
@@ -187,7 +189,7 @@ class Game extends React.Component<Props> {
   };
 
   render() {
-    const { gameOver, score, grid } = this.props;
+    const { gameOver, hiScore, score, grid } = this.props;
 
     const boardSize = grid.length * this.getTileSize() + 4;
 
@@ -205,20 +207,8 @@ class Game extends React.Component<Props> {
           `}
         >
           <h1>2048</h1>
-          <h4>Score: {score}</h4>
-          <button
-            className={css`
-              font: inherit;
-              font-size: 18px;
-              background: none;
-              border: none;
-              padding: 4px 8px;
-              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.22);
-            `}
-            onClick={this.restart}
-          >
-            Start over
-          </button>
+          <h4>score: {score}</h4>
+          <h4>top: {hiScore}</h4>
         </div>
         <div
           className={css`
@@ -238,6 +228,28 @@ class Game extends React.Component<Props> {
           {tiles.map((tile) => (
             <Tile {...tile} key={tile.id} />
           ))}
+        </div>
+        <div
+          className={css`
+            display: flex;
+            justify-content: center;
+            margin: 24px 0;
+          `}
+        >
+          <button
+            className={css`
+              font: inherit;
+              font-size: 18px;
+              background: none;
+              border: none;
+              padding: 16px 24px;
+              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.22);
+              font-weight: bold;
+            `}
+            onClick={this.restart}
+          >
+            Start over
+          </button>
         </div>
       </React.Fragment>
     );

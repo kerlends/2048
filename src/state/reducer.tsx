@@ -11,6 +11,7 @@ import {
 const initialState = {
   gameOver: false,
   grid: [],
+  hiScore: 0,
   score: 0,
   size: 0,
   startingTiles: 0,
@@ -38,11 +39,16 @@ const reducer = (state: State = initialState, action: AnyAction) => {
         direction,
       );
 
+      const { hiScore, ...rest } = state;
+
+      const newScore = state.score + score;
+
       return {
-        ...state,
+        ...rest,
         gameOver: !hasAvailableMoves(moved),
         grid: didMove ? insertNewTileInUnusedCell(moved) : moved,
-        score: state.score + score,
+        hiScore: hiScore >= newScore ? hiScore : newScore,
+        score: newScore,
       };
     }
 

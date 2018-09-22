@@ -18,6 +18,7 @@ export type Grid = Row[];
 export interface State {
   readonly gameOver: boolean;
   readonly grid: Grid;
+  readonly hiScore: number;
   readonly score: number;
   readonly size: number;
   readonly startingTiles: number;
