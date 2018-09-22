@@ -200,6 +200,19 @@ class Game extends React.Component<Props> {
         >
           <h1>2048</h1>
           <h4>Score: {score}</h4>
+          <button
+            className={css`
+              font: inherit;
+              font-size: 18px;
+              background: none;
+              border: none;
+              padding: 4px 8px;
+              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.22);
+            `}
+            onClick={this.restart}
+          >
+            Start over
+          </button>
         </div>
         <div
           className={css`

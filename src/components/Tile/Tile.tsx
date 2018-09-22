@@ -2,7 +2,7 @@ import * as React from 'react';
 import Transition from 'react-transition-group/Transition';
 import { css } from 'emotion';
 import { Position } from '../../state/models';
-import { baseTileStyle, tileStyles } from './Tile.utils';
+import { baseTileStyle, shadeColors, tileStyles } from './Tile.utils';
 
 const duration = 150;
 
@@ -35,6 +35,7 @@ export interface ITile {
   value: number;
   size: number;
   id: ID;
+  innerRef?: React.Ref<HTMLDivElement>;
   mergedFrom?: MergedFrom;
   transitionDuration?: number;
 }
@@ -51,13 +52,17 @@ class Tile extends React.Component {
 
   render() {
     const {
+      id,
+      innerRef,
       mergedFrom,
       size,
       value,
       position,
       transitionDuration,
     } = this.props;
-    const className = value ? tileStyles[value] : false;
+    const className = value
+      ? css(shadeColors[value], tileStyles[value])
+      : false;
     const x = position.x * size;
     const y = position.y * size;
 
@@ -67,7 +72,7 @@ class Tile extends React.Component {
           const styles = transitionStyles[state];
           return (
             <div
-              data-transition-state={state || 'NA'}
+              data-id={id}
               className={css`
                 transition: transform ${transitionDuration}ms
                   ease-in-out;
@@ -83,9 +88,12 @@ class Tile extends React.Component {
                 align-items: center;
                 height: ${size - 2}px;
                 width: ${size - 2}px;
+                border: 1px solid rgba(211, 211, 211, 0.5);
+                box-sizing: border-box;
 
                 ${baseTileStyle} ${className};
               `}
+              ref={innerRef}
             >
               <span>{value}</span>
             </div>

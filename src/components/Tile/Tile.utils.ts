@@ -1,5 +1,44 @@
-import { mix } from 'polished';
+import { reverse } from 'ramda';
+import { getLuminance, mix } from 'polished';
 import { css } from 'emotion';
+
+const buildShadeRange = () => {
+  const denom = 10;
+  const range = [];
+  let modifier = 0;
+  while (modifier <= denom) {
+    range.push(mix(modifier++ / denom, 'black', 'white'));
+  }
+  return range;
+};
+
+interface ShadeColorMap {
+  [prop: number]: {
+    background: string;
+    color: string;
+  };
+}
+
+const buildShadeColorMap = (): ShadeColorMap => {
+  const shades = reverse(buildShadeRange());
+  const map = {};
+  let pow = 2;
+  while (shades.length) {
+    const shade = shades.pop();
+    if (typeof shade !== 'string') break;
+
+    const color = getLuminance(shade) < 0.2 ? 'white' : 'black';
+
+    map[pow] = {
+      background: shade,
+      color,
+    };
+    pow = pow * 2;
+  }
+  return map;
+};
+
+export const shadeColors = buildShadeColorMap();
 
 const textBrightColor = '#f9f6f2';
 const tileColor = '#eee4da';
@@ -62,10 +101,16 @@ const buildColors = () => {
     else if (power >= 1000) styles.fontSize = '25px';
 
     tileStylesMap[power] = css`
+      font-size: ${styles.fontSize};
+    `;
+
+    /*
+    tileStylesMap[power] = css`
       color: ${styles.color};
       background: ${styles.background};
       font-size: ${styles.fontSize};
     `;
+     */
 
     exponent += 1;
   }
