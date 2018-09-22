@@ -42,36 +42,42 @@ class Game extends React.Component<Props> {
     this.removeEventListeners();
   }
 
+  containerRef = React.createRef<HTMLDivElement>();
+
   setEventListeners = () => {
-    window.addEventListener('keydown', this.handleKeyDown);
-    window.addEventListener('touchstart', this.handleTouchStart, {
+    const node = this.containerRef.current;
+
+    if (!node) return;
+
+    node.addEventListener('keydown', this.handleKeyDown);
+    node.addEventListener('touchstart', this.handleTouchStart, {
       passive: false,
     });
-    window.addEventListener('touchmove', this.handleTouchEnd, {
+    node.addEventListener('touchmove', this.handleTouchEnd, {
       passive: false,
     });
-    window.addEventListener('touchend', this.handleTouchEnd, {
+    node.addEventListener('touchend', this.handleTouchEnd, {
       passive: false,
     });
   };
 
   removeEventListeners = () => {
-    window.removeEventListener('keydown', this.handleKeyDown);
-    window.removeEventListener(
+    const node = this.containerRef.current;
+
+    if (!node) return;
+
+    node.removeEventListener('keydown', this.handleKeyDown);
+    node.removeEventListener(
       'touchstart',
       this.handleTouchStart,
       false,
     );
-    window.removeEventListener(
+    node.removeEventListener(
       'touchmove',
       this.handleTouchMove,
       false,
     );
-    window.removeEventListener(
-      'touchend',
-      this.handleTouchEnd,
-      false,
-    );
+    node.removeEventListener('touchend', this.handleTouchEnd, false);
   };
 
   moveUp = () => this.props.move(Direction.Up);
@@ -224,6 +230,7 @@ class Game extends React.Component<Props> {
             box-sizing: border-box;
             margin: 0 auto;
           `}
+          ref={this.containerRef}
         >
           {gameOver && (
             <GameOverOverlay onRestartClick={this.restart} />
