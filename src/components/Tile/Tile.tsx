@@ -1,10 +1,18 @@
 import * as React from 'react';
 import Transition from 'react-transition-group/Transition';
+import { memoize } from 'ramda';
 import { css } from 'emotion';
 import { Position } from '../../state/models';
-import { baseTileStyle, shadeColors, tileStyles } from './Tile.utils';
+import {
+  baseTileStyle,
+  shadeColors,
+  tileStyles,
+  transitionDuration,
+} from './Tile.utils';
 
-const duration = 150;
+const getClassName = memoize((value: number) =>
+  css(shadeColors[value], tileStyles[value]),
+);
 
 const transitionStyles = {
   appearing: {
@@ -27,7 +35,6 @@ type MergedFrom = [ID, ID] | null;
 
 interface DefaultProps {
   mergedFrom: MergedFrom;
-  transitionDuration: number;
 }
 
 export interface ITile {
@@ -37,7 +44,6 @@ export interface ITile {
   id: ID;
   innerRef?: React.Ref<HTMLDivElement>;
   mergedFrom?: MergedFrom;
-  transitionDuration?: number;
 }
 
 type Props = ITile & DefaultProps;
@@ -45,58 +51,42 @@ type Props = ITile & DefaultProps;
 class Tile extends React.PureComponent {
   public static defaultProps: DefaultProps = {
     mergedFrom: null,
-    transitionDuration: 150,
   };
 
   props: Props;
 
-  render() {
-    const {
-      id,
-      mergedFrom,
-      size,
-      value,
-      position,
-      transitionDuration,
-    } = this.props;
-    const className = value
-      ? css(shadeColors[value], tileStyles[value])
-      : false;
+  renderTile = (state: string) => {
+    const { id, size, value, position } = this.props;
+    const className = getClassName(value);
     const x = position.x * size;
     const y = position.y * size;
 
+    const styles = transitionStyles[state];
     return (
-      <Transition appear={!mergedFrom} in timeout={duration}>
-        {(state) => {
-          const styles = transitionStyles[state];
-          return (
-            <div
-              data-id={id}
-              className={css`
-                transition: transform ${transitionDuration}ms
-                  ease-in-out;
-                transform: scale(${styles.scale})
-                  translate(${x}px, ${y}px);
-                transform-origin: ${x + size / 2}px ${y + size / 2}px;
-                position: absolute;
-                top: 0;
-                left: 0;
-                margin: 2px;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                height: ${size - 2}px;
-                width: ${size - 2}px;
-                border: 1px solid rgba(211, 211, 211, 0.5);
-                box-sizing: border-box;
+      <div
+        data-id={id}
+        className={css`
+          transform: scale(${styles.scale}) translate(${x}px, ${y}px);
+          transform-origin: ${x + size / 2}px ${y + size / 2}px;
+          height: ${size - 2}px;
+          width: ${size - 2}px;
 
-                ${baseTileStyle} ${className};
-              `}
-            >
-              <span>{value}</span>
-            </div>
-          );
-        }}
+          ${baseTileStyle} ${className};
+        `}
+      >
+        <span>{value}</span>
+      </div>
+    );
+  };
+
+  render() {
+    return (
+      <Transition
+        appear={!this.props.mergedFrom}
+        in
+        timeout={transitionDuration}
+      >
+        {this.renderTile}
       </Transition>
     );
   }

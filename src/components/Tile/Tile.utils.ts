@@ -2,6 +2,8 @@ import { reverse } from 'ramda';
 import { getLuminance, mix } from 'polished';
 import { css } from 'emotion';
 
+export const transitionDuration = 155;
+
 const buildShadeRange = () => {
   const denom = 10;
   const range = [];
@@ -127,4 +129,15 @@ export const baseTileStyle = css`
   font-weight: bold;
   z-index: 10;
   font-size: 45px;
+
+  transition: transform ${transitionDuration}ms ease-in-out;
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin: 2px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid rgba(211, 211, 211, 0.5);
+  box-sizing: border-box;
 `;
