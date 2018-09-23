@@ -6,13 +6,38 @@ import { Direction } from '../../state/enums';
 import { State } from '../../state/models';
 import Tile, { ITile } from '../Tile';
 import GameOverOverlay from '../GameOverOverlay';
+import Header from '../Header';
+
+const classes = {
+  container: css`
+    height: 100%;
+    width: 100%;
+    position: relative;
+    border: 1px solid #d3d3d3;
+    border-radius: 3px;
+    box-sizing: border-box;
+    margin: 0 auto;
+  `,
+  resetButtonContainer: css`
+    display: flex;
+    justify-content: center;
+    margin: 24px 0;
+  `,
+  resetButton: css`
+    font: inherit;
+    font-size: 18px;
+    background: none;
+    border: none;
+    padding: 16px 24px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.22);
+    font-weight: bold;
+  `,
+};
 
 const enhance = connect(
-  ({ gameOver, grid, hiScore, score, size }: State) => ({
+  ({ gameOver, grid, size }: State) => ({
     gameOver,
     grid,
-    hiScore,
-    score,
     size,
   }),
   actions,
@@ -21,9 +46,7 @@ const enhance = connect(
 interface Props {
   gameOver: boolean;
   grid: State['grid'];
-  hiScore: number;
   move: typeof actions.move;
-  score: number;
   size: number;
   restart: typeof actions.restart;
 }
@@ -188,70 +211,44 @@ class Game extends React.Component<Props> {
     return tiles;
   };
 
+  renderTile = (tile: ITile) => <Tile key={tile.id} {...tile} />;
+
   render() {
-    const { gameOver, hiScore, score, grid } = this.props;
+    const { gameOver, grid } = this.props;
 
     const boardSize = grid.length * this.getTileSize() + 4;
 
     const tiles = this.getTiles();
 
     return (
-      <React.Fragment>
+      <div
+        className={css`
+          position: relative;
+          width: ${boardSize}px;
+          box-sizing: border-box;
+          margin: 0 auto;
+        `}
+      >
+        <Header />
         <div
-          className={css`
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            width: ${boardSize}px;
-            margin: 0 auto;
-          `}
-        >
-          <h1>2048</h1>
-          <h4>score: {score}</h4>
-          <h4>top: {hiScore}</h4>
-        </div>
-        <div
-          className={css`
-            position: relative;
-            height: ${boardSize}px;
-            width: ${boardSize}px;
-            border: 1px solid #d3d3d3;
-            border-radius: 3px;
-            box-sizing: border-box;
-            margin: 0 auto;
-          `}
+          style={{ height: boardSize }}
+          className={classes.container}
           ref={this.containerRef}
         >
           {gameOver && (
             <GameOverOverlay onRestartClick={this.restart} />
           )}
-          {tiles.map((tile) => (
-            <Tile {...tile} key={tile.id} />
-          ))}
+          {tiles.map(this.renderTile)}
         </div>
-        <div
-          className={css`
-            display: flex;
-            justify-content: center;
-            margin: 24px 0;
-          `}
-        >
+        <div className={classes.resetButtonContainer}>
           <button
-            className={css`
-              font: inherit;
-              font-size: 18px;
-              background: none;
-              border: none;
-              padding: 16px 24px;
-              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.22);
-              font-weight: bold;
-            `}
+            className={classes.resetButton}
             onClick={this.restart}
           >
             Start over
           </button>
         </div>
-      </React.Fragment>
+      </div>
     );
   }
 }

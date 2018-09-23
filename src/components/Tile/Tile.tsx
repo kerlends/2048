@@ -42,7 +42,7 @@ export interface ITile {
 
 type Props = ITile & DefaultProps;
 
-class Tile extends React.Component {
+class Tile extends React.PureComponent {
   public static defaultProps: DefaultProps = {
     mergedFrom: null,
     transitionDuration: 150,
@@ -53,7 +53,6 @@ class Tile extends React.Component {
   render() {
     const {
       id,
-      innerRef,
       mergedFrom,
       size,
       value,
@@ -93,7 +92,6 @@ class Tile extends React.Component {
 
                 ${baseTileStyle} ${className};
               `}
-              ref={innerRef}
             >
               <span>{value}</span>
             </div>
