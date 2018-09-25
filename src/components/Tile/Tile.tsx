@@ -1,18 +1,8 @@
 import * as React from 'react';
 import Transition from 'react-transition-group/Transition';
-import { memoize } from 'ramda';
 import { css } from 'emotion';
 import { Position } from '../../state/models';
-import {
-  baseTileStyle,
-  shadeColors,
-  tileStyles,
-  transitionDuration,
-} from './Tile.utils';
-
-const getClassName = memoize((value: number) =>
-  css(shadeColors[value], tileStyles[value]),
-);
+import { getBaseStyles, transitionDuration } from './Tile.utils';
 
 const transitionStyles = {
   appearing: {
@@ -56,35 +46,33 @@ class Tile extends React.PureComponent {
   props: Props;
 
   renderTile = (state: string) => {
-    const { id, size, value, position } = this.props;
-    const className = getClassName(value);
+    const { value, position, size } = this.props;
+    const baseStyles = getBaseStyles(value);
     const x = position.x * size;
     const y = position.y * size;
 
-    const styles = transitionStyles[state];
-    return (
-      <div
-        data-id={id}
-        className={css`
-          transform: scale(${styles.scale}) translate(${x}px, ${y}px);
-          transform-origin: ${x + size / 2}px ${y + size / 2}px;
-          height: ${size - 2}px;
-          width: ${size - 2}px;
+    const { scale } = transitionStyles[state];
+    const transformStyles = css`
+      transform: scale(${scale}) translate(${x}px, ${y}px);
+      transform-origin: ${x + size / 2}px ${y + size / 2}px;
+      height: ${size - 2}px;
+      width: ${size - 2}px;
+    `;
 
-          ${baseTileStyle} ${className};
-        `}
-      >
+    return (
+      <div className={css(transformStyles, baseStyles)}>
         <span>{value}</span>
       </div>
     );
   };
 
   render() {
+    const { mergedFrom } = this.props;
     return (
       <Transition
-        appear={!this.props.mergedFrom}
-        in
+        appear={!mergedFrom}
         timeout={transitionDuration}
+        in
       >
         {this.renderTile}
       </Transition>
