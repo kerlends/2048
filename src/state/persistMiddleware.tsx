@@ -1,11 +1,15 @@
 import { Middleware } from 'redux';
-import { ActionTypes } from './enums';
+import { ActionTypes, GameStatus } from './enums';
 
 const key = '@@2048/cache';
 
 export const getPersistedState = () => {
   const state = localStorage.getItem(key);
-  return state ? JSON.parse(state) : undefined;
+  return state
+    ? Object.assign({}, JSON.parse(state), {
+        status: GameStatus.Paused,
+      })
+    : undefined;
 };
 
 const persistMiddleware: Middleware = (store) => (next) => (

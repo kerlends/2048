@@ -1,11 +1,13 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { css } from 'emotion';
-import * as actions from '../../state/actions';
-import { Direction } from '../../state/enums';
+import { move, start } from '../../state/actions';
+import { Direction, GameStatus } from '../../state/enums';
 import { State } from '../../state/models';
 import Tile, { ITile } from '../Tile';
-import GameOverOverlay from '../GameOverOverlay';
+import GameControls from '../GameControls';
+import GameDuration from '../GameDuration';
+import GameOverlay from '../GameOverlay';
 import Header from '../Header';
 
 const classes = {
@@ -18,48 +20,43 @@ const classes = {
     box-sizing: border-box;
     margin: 0 auto;
   `,
-  resetButtonContainer: css`
-    display: flex;
-    justify-content: center;
-    margin: 24px 0;
-  `,
-  resetButton: css`
-    font: inherit;
-    font-size: 18px;
-    background: none;
-    border: none;
-    padding: 16px 24px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.22);
-    font-weight: bold;
-  `,
 };
 
 const enhance = connect(
-  ({ gameOver, grid, size }: State) => ({
-    gameOver,
+  ({ grid, size, status }: State) => ({
     grid,
     size,
+    status,
   }),
-  actions,
+  { move, start },
 );
 
 interface Props {
-  gameOver: boolean;
   grid: State['grid'];
-  move: typeof actions.move;
+  move: typeof move;
   size: number;
-  restart: typeof actions.restart;
+  start: typeof start;
+  status: GameStatus;
 }
 
 class Game extends React.Component<Props> {
   componentDidMount() {
-    this.setEventListeners();
+    const { start, status } = this.props;
+
+    if (status === GameStatus.Running) this.setEventListeners();
+    else if (status === GameStatus.Initializing) start();
   }
 
   componentDidUpdate(lastProps: Props) {
-    if (this.props.gameOver && !lastProps.gameOver)
+    if (
+      this.props.status !== GameStatus.Running &&
+      lastProps.status === GameStatus.Running
+    )
       this.removeEventListeners();
-    else if (!this.props.gameOver && lastProps.gameOver)
+    else if (
+      this.props.status === GameStatus.Running &&
+      lastProps.status !== GameStatus.Running
+    )
       this.setEventListeners();
   }
 
@@ -112,8 +109,6 @@ class Game extends React.Component<Props> {
   moveLeft = () => this.props.move(Direction.Left);
 
   moveRight = () => this.props.move(Direction.Right);
-
-  restart = () => this.props.restart();
 
   touches: {
     x: number;
@@ -214,7 +209,7 @@ class Game extends React.Component<Props> {
   renderTile = (tile: ITile) => <Tile key={tile.id} {...tile} />;
 
   render() {
-    const { gameOver, grid } = this.props;
+    const { grid } = this.props;
 
     const boardSize = grid.length * this.getTileSize() + 4;
 
@@ -235,19 +230,11 @@ class Game extends React.Component<Props> {
           className={classes.container}
           ref={this.containerRef}
         >
-          {gameOver && (
-            <GameOverOverlay onRestartClick={this.restart} />
-          )}
+          <GameOverlay />
           {tiles.map(this.renderTile)}
         </div>
-        <div className={classes.resetButtonContainer}>
-          <button
-            className={classes.resetButton}
-            onClick={this.restart}
-          >
-            Start over
-          </button>
-        </div>
+        <GameControls />
+        <GameDuration />
       </div>
     );
   }

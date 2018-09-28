@@ -1,15 +1,15 @@
 import { createStore, applyMiddleware, compose } from 'redux';
 import thunk from 'redux-thunk';
 import reducer from './reducer';
+import durationMiddleware from './durationMiddleware';
 import persistMiddleware, {
   getPersistedState,
 } from './persistMiddleware';
-import { initialize } from './actions';
 
 const DEVTOOLS_COMPOSE_NAMESPACE =
   '__REDUX_DEVTOOLS_EXTENSION_COMPOSE__';
 
-const middleware = [thunk, persistMiddleware];
+const middleware = [thunk, durationMiddleware, persistMiddleware];
 
 const composeEnhancers =
   DEVTOOLS_COMPOSE_NAMESPACE in window
@@ -23,7 +23,5 @@ const store = createStore(
   persistedState,
   composeEnhancers(applyMiddleware(...middleware)),
 );
-
-if (!persistedState) store.dispatch(initialize());
 
 export default store;

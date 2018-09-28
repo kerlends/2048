@@ -1,6 +1,6 @@
 import { ActionTypes, Direction } from './enums';
 
-export const initialize = (
+export const start = (
   size: number = 3,
   startingTiles: number = 2,
 ) => ({
@@ -16,6 +16,14 @@ export const move = (direction: Direction) => ({
   payload: {
     direction,
   },
+});
+
+export const pause = () => ({
+  type: ActionTypes.Pause,
+});
+
+export const resume = () => ({
+  type: ActionTypes.Resume,
 });
 
 export const restart = () => ({
