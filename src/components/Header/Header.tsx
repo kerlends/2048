@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { State } from '../../state/models';
 
 const pickScoreProps = ({ hiScore, score }: State) => ({

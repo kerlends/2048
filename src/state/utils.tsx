@@ -1,4 +1,4 @@
-import * as uuidV4 from 'uuid/v4';
+import * as uuid from 'uuid';
 import { always, lensPath, over, pathOr, reverse } from 'ramda';
 import { Direction } from './enums';
 import { Cell, Grid, Position, Tile } from './models';
@@ -18,7 +18,7 @@ export const initialize = (size: number): Grid => {
 export const createTile = (parent1?: Tile, parent2?: Tile): Tile => {
   if (parent1 && parent2) {
     return {
-      id: uuidV4(),
+      id: uuid.v4(),
       value: parent1.value * 2,
       parents: [parent1.id, parent2.id],
     };
@@ -27,7 +27,7 @@ export const createTile = (parent1?: Tile, parent2?: Tile): Tile => {
   const value = Math.random() < 0.9 ? 2 : 4;
 
   return {
-    id: uuidV4(),
+    id: uuid.v4(),
     value,
     parents: null,
   };

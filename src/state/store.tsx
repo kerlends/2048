@@ -11,9 +11,9 @@ const DEVTOOLS_COMPOSE_NAMESPACE =
 
 const middleware = [thunk, persistMiddleware];
 
-const composeEnhancers =
+const composeEnhancers: typeof compose =
   DEVTOOLS_COMPOSE_NAMESPACE in window
-    ? window[DEVTOOLS_COMPOSE_NAMESPACE]
+    ? (window as any)[DEVTOOLS_COMPOSE_NAMESPACE]
     : compose;
 
 const persistedState = getPersistedState();

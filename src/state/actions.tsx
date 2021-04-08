@@ -1,7 +1,7 @@
 import { ActionTypes, Direction } from './enums';
 
 export const initialize = (
-  size: number = 3,
+  size: number = 4,
   startingTiles: number = 2,
 ) => ({
   type: ActionTypes.Initialize,

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import * as actions from '../../state/actions';
 import { Direction } from '../../state/enums';
 import { State } from '../../state/models';

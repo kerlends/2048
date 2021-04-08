@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 interface Props {
   onRestartClick: (evt: React.SyntheticEvent) => any;

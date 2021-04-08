@@ -1,7 +1,7 @@
 import { reverse } from 'ramda';
 import { getLuminance, mix } from 'polished';
-import { css } from 'emotion';
-import { memoize } from 'ramda';
+import { css } from '@emotion/css';
+import { identity, memoizeWith } from 'ramda';
 
 export const tileSize = 60;
 
@@ -9,7 +9,7 @@ export const transitionDuration = 155;
 
 const buildShadeRange = () => {
   const denom = 10;
-  const range = [];
+  const range: string[] = [];
   let modifier = 0;
   while (modifier <= denom) {
     range.push(mix(modifier++ / denom, 'black', 'white'));
@@ -26,7 +26,7 @@ interface ShadeColorMap {
 
 const buildShadeColorMap = (): ShadeColorMap => {
   const shades = reverse(buildShadeRange());
-  const map = {};
+  const map: ShadeColorMap = {};
   let pow = 2;
   while (shades.length) {
     const shade = shades.pop();
@@ -50,7 +50,7 @@ const buildFontStyles = () => {
   let exponent = 1;
   let limit = 11;
 
-  const tileStylesMap = {};
+  const tileStylesMap: {[key: number]: string} = {};
 
   while (exponent <= limit) {
     const power = Math.pow(base, exponent);
@@ -90,6 +90,6 @@ export const baseTileStyles = css`
   box-sizing: border-box;
 `;
 
-export const getBaseStyles = memoize((value: number) =>
+export const getBaseStyles = memoizeWith(identity, (value: number) =>
   css(shadeColors[value], tileFontStyles[value], baseTileStyles),
 );

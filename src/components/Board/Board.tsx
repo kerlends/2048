@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { css } from 'emotion';
-import Tile, { ITile } from '../Tile/Tile';
+import { css } from '@emotion/css';
+import Tile, { ITile } from '../Tile';
 
 const toPositiveInteger = (num: number) => {
   if (num < 0) num = Math.abs(num);
@@ -13,11 +13,8 @@ interface Props {
   tiles: ITile[];
 }
 
-class Board extends React.Component {
-  props: Props;
 
-  render() {
-    const { tiles } = this.props;
+const Board = ({ tiles }: Props) => {
 
     const root = toPositiveInteger(Math.sqrt(tiles.length));
 
@@ -38,9 +35,8 @@ class Board extends React.Component {
         </div>
       </React.Fragment>
     );
-  }
 }
 
 export default Board;
 
-export { Props as IBoard };
+export type { Props as IBoard };

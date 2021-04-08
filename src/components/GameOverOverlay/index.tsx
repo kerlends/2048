@@ -1,3 +1,1 @@
-import GameOverOverlay from './GameOverOverlay';
-
-export default GameOverOverlay;
+export { default } from './GameOverOverlay';

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import Transition from 'react-transition-group/Transition';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { Position } from '../../state/models';
 import { getBaseStyles, transitionDuration } from './Tile.utils';
 
@@ -17,15 +17,11 @@ const transitionStyles = {
   exited: {
     scale: 0,
   },
-};
+} as any;
 
 type ID = string;
 
 type MergedFrom = [ID, ID] | null;
-
-interface DefaultProps {
-  mergedFrom: MergedFrom;
-}
 
 export interface ITile {
   position: Position;
@@ -33,20 +29,12 @@ export interface ITile {
   size: number;
   id: ID;
   innerRef?: React.Ref<HTMLDivElement>;
-  mergedFrom?: MergedFrom;
+  mergedFrom?: MergedFrom | null;
 }
 
-type Props = ITile & DefaultProps;
+const Tile = ({ value, position, size, mergedFrom = null }: ITile) => {
 
-class Tile extends React.PureComponent {
-  public static defaultProps: DefaultProps = {
-    mergedFrom: null,
-  };
-
-  props: Props;
-
-  renderTile = (state: string) => {
-    const { value, position, size } = this.props;
+  const renderTile = (state: string) => {
     const baseStyles = getBaseStyles(value);
     const x = position.x * size;
     const y = position.y * size;
@@ -66,18 +54,15 @@ class Tile extends React.PureComponent {
     );
   };
 
-  render() {
-    const { mergedFrom } = this.props;
     return (
       <Transition
         appear={!mergedFrom}
         timeout={transitionDuration}
         in
       >
-        {this.renderTile}
+        {renderTile}
       </Transition>
     );
-  }
 }
 
 export default Tile;

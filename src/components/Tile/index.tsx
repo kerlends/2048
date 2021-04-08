@@ -1,5 +1,2 @@
-import Tile, { ITile } from './Tile';
-
-export default Tile;
-
-export { ITile };
+export { default } from './Tile'
+export type {ITile} from './Tile'
